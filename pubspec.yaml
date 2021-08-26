@@ -71,7 +71,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
+  assets:
+  - images/
+  - assets/
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
@@ -102,3 +104,25 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+  fonts:
+    - family: SourceSansPro
+      fonts:
+        - asset: fonts/SourceSansPro-Black.ttf
+        - asset: fonts/SourceSansPro-Black.ttf
+        - asset: fonts/SourceSansPro-BlackItalic.ttf
+        - asset: fonts/SourceSansPro-Bold.ttf
+        - asset: fonts/SourceSansPro-BoldItalic.ttf
+        - asset: fonts/SourceSansPro-ExtraLight.ttf
+        - asset: fonts/SourceSansPro-ExtraLightItalic.ttf
+        - asset: fonts/SourceSansPro-Italic.ttf
+        - asset: fonts/SourceSansPro-Light.ttf
+        - asset: fonts/SourceSansPro-LightItalic.ttf
+        - asset: fonts/SourceSansPro-Regular.ttf
+        - asset: fonts/SourceSansPro-SemiBold.ttf
+        - asset: fonts/SourceSansPro-SemiBoldItalic.ttf
+    - family: Nu
+      fonts:
+        - asset: fonts/Nunito-Regular.ttf
+    - family: Default
+      fonts:
+        - asset: fonts/ProximaNova-Regular.otf

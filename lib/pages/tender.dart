@@ -1115,7 +1115,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Container(
-                      height: verticalPixel * 97,
+                      height: verticalPixel * 88,
                       margin: EdgeInsets.symmetric(horizontal: horizontalPixel * 3.5, vertical: verticalPixel * 1),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),

@@ -16,6 +16,6 @@ Route toPage(page) {
           child: child,
         );
       },
-      transitionDuration: Duration(milliseconds: 500) //any duration you want
+      transitionDuration: Duration(milliseconds: 1000) //any duration you want
       );
 }
