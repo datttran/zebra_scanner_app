@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:zebra_trackaware/constants.dart';
 import 'package:zebra_trackaware/pages/tender.dart';
 
-import 'logics/pageRoute.dart';
+import '../logics/pageRoute.dart';
 
 class Home extends StatefulWidget {
   @override

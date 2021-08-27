@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
@@ -58,6 +59,47 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
   String destination = 'Destination';
   Color kitColor = Colors.blueAccent;
   // Platform messages are asynchronous, so we initialize in an async method.
+  //TESTING AREA
+
+  static const EventChannel scanChannel = EventChannel('com.zebra_trackaware/scan');
+  static const MethodChannel methodChannel = MethodChannel('com.zebra_trackaware/command');
+
+  Future<void> _sendDataWedgeCommand(String command, String parameter) async {
+    try {
+      String argumentAsJson = jsonEncode({"command": command, "parameter": parameter});
+
+      await methodChannel.invokeMethod('sendDataWedgeCommandStringParameter', argumentAsJson);
+    } on PlatformException {
+      //  Error invoking Android method
+    }
+  }
+
+  Future<void> _createProfile(String profileName) async {
+    try {
+      await methodChannel.invokeMethod('createDataWedgeProfile', profileName);
+    } on PlatformException {
+      //  Error invoking Android method
+    }
+  }
+
+  String? barcode;
+
+  void _onEvent(event) {
+    setState(() {
+      Map barcodeScan = jsonDecode(event);
+      barcode = barcodeScan['scanData'];
+    });
+    autoField(barcode);
+    print(barcode);
+  }
+
+  void _onError(Object error) {
+    setState(() {
+      barcode = "Barcode: error";
+    });
+  }
+
+  /////////////////////////////////////END TESTING HERE
 
   List<Color> active1 = [Color(0xff4689ee), Color(0xff4843de)];
 
@@ -72,6 +114,9 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
   @override
   initState() {
     createBullet();
+    scanChannel.receiveBroadcastStream().listen(_onEvent, onError: _onError);
+    _createProfile("zebraScannerApp");
+
     //globals.honeywellScanner.stopScanner();
 
     //_controllerO.text = globals.currentSite;
@@ -113,36 +158,29 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
     return bullet;
   }
 
-/*
   autoField(barcode) {
     bool result = false;
-    if (barcode.length == globals.orderLimit) {
-      if (barcode.contains('C')) {
-        ticketHolder[1] = barcode;
-        partN.text = barcode;
-        result = true;
-      } else {
-        ticketHolder[0] = barcode;
-        orderN.text = barcode;
-        result = true;
-      }
+    if (barcode.length >= 10 && barcode.length <= globals.orderLimit) {
+      ticketHolder[0] = barcode;
+      orderN.text = barcode;
+      result = true;
     } else if (barcode.length == globals.containerLimit) {
       ticketHolder[1] = barcode;
       partN.text = barcode;
       result = true;
-    } else if (barcode.length == globals.trackingLimit) {
+    } else if (barcode.length >= globals.trackingLimit) {
       ticketHolder[2] = barcode;
       toolN.text = barcode;
       result = true;
     } else {
       result = false;
     }
+    print(result);
     setState(() {
       createBullet();
     });
     return result;
   }
-*/
 
 /*  checkLocationField() {
     if (_controllerO.text == '') {

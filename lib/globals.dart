@@ -105,6 +105,6 @@ bool kitScanning = false;
 bool filter = false;
 
 //PARSE
-int orderLimit = 10;
-int containerLimit = 10;
-int trackingLimit = 18;
+int orderLimit = 12;
+int containerLimit = 9;
+int trackingLimit = 15;

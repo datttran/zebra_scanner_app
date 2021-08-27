@@ -10,8 +10,8 @@ import 'package:zebra_trackaware/utils/utils.dart';
 
 import 'constants.dart';
 import 'globals.dart' as globals;
-import 'home.dart';
 import 'logics/pageRoute.dart';
+import 'pages/home.dart';
 
 void main() {
   runApp(MyApp());
