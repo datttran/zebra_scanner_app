@@ -6,6 +6,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:zebra_trackaware/utils/strings.dart';
 
 bool isDriverMode = false;
+bool tenderLock = false;
 bool useToolNumber = true;
 bool isTesting = true;
 String tenderProductionPartsDispName = Strings.TENDER_PRODUCTION_PARTS;
@@ -69,6 +70,7 @@ String? signature;
 List? locations;
 var touchMode = false;
 String? user;
+String? userName;
 //List
 List tenderList = [];
 List pickupList = [];
@@ -108,3 +110,7 @@ bool filter = false;
 int orderLimit = 12;
 int containerLimit = 9;
 int trackingLimit = 15;
+
+//New
+List? todayOrder = [];
+List<bool> customCardTapped = [];

@@ -171,5 +171,6 @@ Future userLogin(String _userName, String _password) async {
   var loginResponse = await http.post(loginUrl, headers: {'authorization': basicAuth}, body: {'user': _userName, 'password': _password});
   final loginResponseJson = jsonDecode(loginResponse.body);
   print("LoginResponse ***:" + loginResponseJson.toString());
+  globals.userName = json.decode(loginResponse.body)['username'];
   return loginResponseJson['message'];
 }

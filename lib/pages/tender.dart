@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
+import 'package:zebra_trackaware/classes/pickupPart.dart';
 import 'package:zebra_trackaware/globals.dart' as globals;
 
 import '../constants.dart';
@@ -82,20 +83,171 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
     }
   }
 
-  String? barcode;
+  createTenderTicket(orderN, partN, toolN, type) {
+    print('creating ticket');
+    print(orderN);
+    print(partN);
+    print(toolN);
+    if (true) {
+      PickUpPart pickupItem = new PickUpPart();
+      pickupItem.orderNumber = orderN.toString();
+      pickupItem.partNumber = partN.toString();
+      pickupItem.priority = priority;
+      pickupItem.toolNumber = toolN.toString();
+      pickupItem.location = _controllerO.text;
+      pickupItem.destination = _controllerD.text;
+      pickupItem.isSynced = 0;
+      pickupItem.quantity = quantity.text;
+      pickupItem.tagType = type.toString();
+
+      print('tool N is ' + toolN.toString());
+      globals.tenderList.insert(0, pickupItem);
+
+      var contain = globals.tenderList.where((element) => element.orderNumber == orderN);
+
+      /*if (contain.isEmpty) {
+      print('not contain');
+      globals.tenderList.insert(0, pickupItem);
+    } else {
+      print('contain');
+      int t = globals.tenderList.indexOf(contain.first);
+      print('t = ' + t.toString());
+      globals.tenderList[t] = pickupItem;
+    }*/
+    } else {
+      print('not support');
+      print(globals.lengthLimit);
+      print(orderN.toString().length.toString());
+      print(orderN);
+    }
+  }
+
+  String? scannedCode;
 
   void _onEvent(event) {
     setState(() {
       Map barcodeScan = jsonDecode(event);
-      barcode = barcodeScan['scanData'];
+      scannedCode = barcodeScan['scanData'];
     });
-    autoField(barcode);
-    print(barcode);
+    if (checkLocationField()) {
+      if (true /*globals.lengthLimit == result.toString().length.toString()*/) {
+        if (fieldTapped == false) {
+          var i = ticketHolder.indexOf('');
+          print('i: ' + i.toString());
+          bool auto = autoField(scannedCode);
+          type.add(auto);
+          print(type);
+
+          print(auto.toString() + '1');
+          if (auto != true && globals.tenderLock == false) {
+            if (ticketHolder[0] == '') {
+              /*if (result.length == 7) {
+              partN.text = 'KIT-000000-001';
+              ticketHolder[1] = 'KIT-000000-001';
+            }*/
+              setState(() {
+                orderN.text = scannedCode!;
+                ticketHolder[0] = scannedCode;
+                createBullet();
+
+                showToast('Order Number Scanned', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
+              });
+              i = ticketHolder.indexOf('');
+              if (i == 2) {
+                setState(() {
+                  showToast('Please insert tool number', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
+                  isOpen = true;
+                  height = verticalPixel * 50;
+                });
+              }
+            } else if (ticketHolder[1] == '') {
+              setState(() {
+                partN.text = scannedCode!;
+                ticketHolder[1] = scannedCode;
+                createBullet();
+
+                showToast('Container Number Scanned', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
+              });
+
+              /*if (ticketHolder.length == 3 && ticketHolder[2] == "") {
+              setState(() {
+                showToast('Container Number Scanned \nPlease insert tool number', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
+                isOpen = true;
+                height = verticalPixel * 50;
+              });
+            }*/
+            } else if (ticketHolder[2] == '') {
+              setState(() {
+                toolN.text = scannedCode!;
+                ticketHolder[2] = scannedCode;
+                createBullet();
+
+                showToast('Tracking Number Scanned', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
+              });
+
+              /*if (ticketHolder.length == 3 && ticketHolder[2] == "") {
+              setState(() {
+                showToast('Container Number Scanned \nPlease insert tool number', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
+                isOpen = true;
+                height = verticalPixel * 50;
+              });
+            }*/
+            }
+          }
+
+          if (!ticketHolder.contains('')) {
+            print('TODO://Creating ticket');
+            createTenderTicket(orderN.text, partN.text, toolN.text, type.reduce((a, b) => a & b));
+            type = [];
+            print(ticketHolder);
+            showToast('Order Created', context: context, axis: Axis.horizontal, alignment: Alignment.bottomCenter, position: StyledToastPosition.center);
+            print(globals.tenderList);
+
+            //Finished
+            ticketHolder = globals.useToolNumber
+                ? [orderLocked ? orderN.text = orderN.text : orderN.text = '', partLocked ? partN.text = partN.text : partN.text = '', toolLocked ? toolN.text = toolN.text : toolN.text = '']
+                : [orderLocked ? orderN.text = orderN.text : orderN.text = '', partLocked ? partN.text = partN.text : partN.text = ''];
+            print(globals.tenderList);
+            setState(() {
+              isOpen = false;
+              height = verticalPixel * 20;
+              //quantity.text = '1';
+              createBullet();
+            });
+          }
+          print(ticketHolder);
+        } else {
+          print('fill field');
+          if (tappedField == 0) {
+            setState(() {
+              orderN.text = scannedCode!;
+              ticketHolder[0] = scannedCode;
+            });
+          } else if (tappedField == 1) {
+            setState(() {
+              partN.text = scannedCode!;
+              ticketHolder[1] = scannedCode;
+            });
+          } else if (tappedField == 2) {
+            setState(() {
+              toolN.text = scannedCode!;
+              ticketHolder[2] = scannedCode;
+            });
+          } else {
+            print('fail! unknown tappedField');
+          }
+        }
+      } else {
+        showToast('This barcode is not supported', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
+      }
+    }
+
+    SystemChrome.restoreSystemUIOverlays();
   }
 
   void _onError(Object error) {
     setState(() {
-      barcode = "Barcode: error";
+      scannedCode = "Barcode: error";
     });
   }
 
@@ -182,7 +334,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
     return result;
   }
 
-/*  checkLocationField() {
+  checkLocationField() {
     if (_controllerO.text == '') {
       showToast('Please Select: Origin Location', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
       setState(() {
@@ -200,7 +352,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
     } else {
       return true;
     }
-  }*/
+  }
 
   @override
   void setState(fn) {

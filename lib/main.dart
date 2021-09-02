@@ -1,7 +1,13 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:zebra_trackaware/logics/APIlogic.dart';
 import 'package:zebra_trackaware/size_config.dart';
 import 'package:zebra_trackaware/utils/colorstrings.dart';
@@ -10,8 +16,155 @@ import 'package:zebra_trackaware/utils/utils.dart';
 
 import 'constants.dart';
 import 'globals.dart' as globals;
+import 'logics/location_response.dart';
 import 'logics/pageRoute.dart';
 import 'pages/home.dart';
+
+getLocation() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  // Test if location services are enabled.
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    // Location services are not enabled don't continue
+    // accessing the position and request users of the
+    // App to enable the location services.
+    return Future.error('Location services are disabled.');
+  }
+
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      // Permissions are denied, next time you could try
+      // requesting permissions again (this is also where
+      // Android's shouldShowRequestPermissionRationale
+      // returned true. According to Android guidelines
+      // your App should show an explanatory UI now.
+      return Future.error('Location permissions are denied');
+    }
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    // Permissions are denied forever, handle appropriately.
+    return Future.error('Location permissions are permanently denied, we cannot request permissions.');
+  }
+
+  // When we reach here, permissions are granted and we can
+  // continue accessing the position of the device.
+
+  Position _locationData = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+
+  globals.placeMarks = await placemarkFromCoordinates(_locationData.latitude, _locationData.longitude);
+
+  globals.currentLocation = globals.placeMarks![0];
+  globals.currentLat = _locationData.latitude;
+  globals.currentLong = _locationData.longitude;
+  //print(placeMarks);
+
+  print('getting origins - login page - [1]');
+
+  if (globals.lList.isEmpty) {
+    await getOrigin();
+  } else {
+    print('2:' + globals.lList.toString());
+  }
+  print(globals.lList);
+  print('done - getting current site');
+
+  globals.currentSite = autoOrigin(_locationData.latitude, _locationData.longitude);
+}
+
+final R = 6372.8;
+double ddToDistance(double lat1, lon1, lat2, lon2) {
+  double dLat = _toRadians(lat2 - lat1);
+  double dLon = _toRadians(lon2 - lon1);
+  lat1 = _toRadians(lat1);
+  lat2 = _toRadians(lat2);
+  double a = pow(sin(dLat / 2), 2) + pow(sin(dLon / 2), 2) * cos(lat1) * cos(lat2);
+  double c = 2 * asin(sqrt(a));
+  return R * c;
+}
+
+double _toRadians(double degree) {
+  return degree * pi / 180;
+}
+
+String autoOrigin(lat, long) {
+  String result;
+
+  if (globals.locationMap.length > 0) {
+    ////print('[autoOrigin] current long  ' + globals.currentLong.toString());
+    ////print('[autoOrigin] current lat ' + globals.currentLat.toString());
+    List<double> dList = [];
+
+    /// List contains distances from current position to location in locationMap
+    globals.locationMap.forEach((element) {
+      double d = ddToDistance(element.lat, element.long, lat, long) * 1000;
+      dList.add(d);
+      ////print('distance is ' + d.toString() + 'm');
+
+      /*if (longRange.abs() < .00015 && latRange.abs() < .00015) {
+        result = element.id;
+      }*/
+    });
+    double x = dList.reduce(min);
+    if (x <= globals.sensitivity) {
+      int i = dList.indexOf(x);
+      result = globals.locationMap[i].id;
+    } else {
+      result = 'Unknown';
+    }
+    ////print(dList);
+    ////print(result);
+
+    return result;
+  } else {
+    ////print('locationData is empty');
+
+    return 'Unknown';
+  }
+}
+
+fetchLocation() async {
+  final response = await http.get(Uri.parse(globals.baseUrl + '/readpoint/'), headers: <String, String>{'Authorization': 'Basic cmtoYW5kaGVsZGFwaTppMjExVTI7'});
+
+  if (response.statusCode == 200) {
+    // If the server did return a 200 OK response,
+    // then parse the JSON.
+
+    return response.body;
+  } else {
+    // If the server did not return a 200 OK response,
+    // then throw an exception.
+    throw Exception('Failed to load location');
+  }
+}
+
+getOrigin() async {
+  print('getting llist');
+  globals.futureLocation = await fetchLocation();
+  globals.originLocations = json.decode(globals.futureLocation).map((data) => LocationResponse.fromJson(data)).toList();
+
+  if (globals.originLocations != null) {
+    globals.locationList = [];
+    globals.lList = [];
+    globals.originLocations.forEach((element) {
+      Widget block = Text(element.code);
+      globals.locationList.add(block);
+      globals.lList.add(element.code);
+
+      globals.locationMap.add(Loc(id: element.code));
+    });
+  }
+
+  globals.locationList = globals.locationList.toSet().toList();
+  globals.lList = globals.lList.toSet().toList();
+
+  globals.locationMap = globals.locationMap.toSet().toList();
+  //globals.currentSite = autoOrigin(_locationData);
+}
 
 void main() {
   runApp(MyApp());
@@ -60,6 +213,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getLocation();
+  }
+
   @override
   void dispose() {
     // TODO: implement dispose
