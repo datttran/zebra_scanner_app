@@ -8,10 +8,10 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.EventChannel.EventSink
 import io.flutter.plugin.common.EventChannel.StreamHandler
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugins.GeneratedPluginRegistrant
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
-import io.flutter.plugins.GeneratedPluginRegistrant;
 
 //  This sample implementation is heavily based on the flutter demo at
 //  https://github.com/flutter/flutter/blob/master/examples/platform_channel/android/app/src/main/java/com/example/platformchannel/MainActivity.java
@@ -24,6 +24,8 @@ class MainActivity: FlutterActivity() {
     private val PROFILE_INTENT_BROADCAST = "2"
 
     private val dwInterface = DWInterface()
+
+
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
@@ -73,12 +75,14 @@ class MainActivity: FlutterActivity() {
                 if (intent.action.equals(PROFILE_INTENT_ACTION))
                 {
                     //  A barcode has been scanned
-                    var scanData = intent.getStringExtra(DWInterface.DATAWEDGE_SCAN_EXTRA_DATA_STRING)
+
+                    var scanData =intent.getStringExtra(DWInterface.DATAWEDGE_SCAN_EXTRA_DATA_STRING)
+
                     var symbology = intent.getStringExtra(DWInterface.DATAWEDGE_SCAN_EXTRA_LABEL_TYPE)
                     var date = Calendar.getInstance().getTime()
                     var df = SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
                     var dateTimeString = df.format(date)
-                    var currentScan = Scan(scanData,symbology, dateTimeString);
+                    var currentScan = Scan(scanData,   symbology, dateTimeString);
                     events?.success(currentScan.toJson())
                 }
                 //  Could handle return values from DW here such as RETURN_GET_ACTIVE_PROFILE

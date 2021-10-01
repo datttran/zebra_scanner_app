@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -223,9 +224,11 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose() {
     // TODO: implement dispose
+
     super.dispose();
   }
 
+  bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
@@ -347,6 +350,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ));
 
     _onLoginButtonPressed() async {
+      setState(() {
+        _isLoading = true;
+      });
       if (_formKey.currentState!.validate()) {
         //terms and conditions changed to remember me
         /* if (!rememberMe) {
@@ -386,162 +392,173 @@ class _MyHomePageState extends State<MyHomePage> {
 
         //
       }
+      Timer(Duration(seconds: 1), () {
+        setState(() {
+          _isLoading = false;
+        });
+      });
     }
 
     return Material(
       child: GestureDetector(
         onTap: () {
           FocusScope.of(context).requestFocus(new FocusNode());
+          print('out');
         },
-        child: Form(
-            key: _formKey,
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [Color(0xff2C2C34), Color(0xff171721)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-              ),
-              child: Stack(children: [
-                Text(
-                  'T R A C K   '
-                  ' A W A R E',
-                  style: TextStyle(
-                    fontSize: verticalPixel * 25,
+        child: Stack(
+          children: [
+            Form(
+                key: _formKey,
+                child: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  margin: EdgeInsets.fromLTRB(0, 0, 0, 0),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [Color(0xff2C2C34), Color(0xff171721)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                   ),
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[
-                    Padding(
-                        padding: EdgeInsets.all(26.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 7,
-                            ),
+                  child: Stack(children: [
+                    Text(
+                      'T R A C K   '
+                      ' A W A R E',
+                      style: TextStyle(
+                        fontSize: verticalPixel * 25,
+                      ),
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: <Widget>[
+                        Padding(
+                            padding: EdgeInsets.all(26.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 7,
+                                ),
 
-                            /*SvgPicture.asset(
-                                    "assets/logo.svg",
-                                    height: verticalPixel*20,
-                                    color: Colors.white70,
-                                  ),*/
-                          ],
-                        )),
-                    SizedBox(
-                      height: verticalPixel * 7,
-                    ),
-                    Column(
-                      children: [
-                        userNameBlock,
-                        passwordBlock,
-                        Container(
-                          width: double.infinity,
-                          //height: 30,
-                          //color: Colors.greenAccent,
-                          margin: EdgeInsets.fromLTRB(0, 8, 40, 8),
-                          child: CheckboxListTile(
-                            activeColor: Colors.indigoAccent.withOpacity(.5),
-                            title: Text(
-                              "Remember me",
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            value: rememberMe,
-                            onChanged: (value) {
-                              print('tap');
-                              setState(() {
-                                rememberMe = value!;
-                              });
-                            },
-                          ),
+                                /*SvgPicture.asset(
+                                      "assets/logo.svg",
+                                      height: verticalPixel*20,
+                                      color: Colors.white70,
+                                    ),*/
+                              ],
+                            )),
+                        SizedBox(
+                          height: verticalPixel * 7,
                         ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: verticalPixel * 1,
-                    ),
-                    Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            _onLoginButtonPressed();
-                          },
-                          child: Container(
+                        Column(
+                          children: [
+                            userNameBlock,
+                            passwordBlock,
+                            Container(
                               width: double.infinity,
-                              height: 60,
-                              //margin: EdgeInsets.fromLTRB(40, 0, 40, 0),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(colors: [Color(0xff621fff), Color(0xff640eba)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                                  shape: BoxShape.rectangle,
-                                  border: Border.all(color: Colors.transparent, width: 1.0),
-                                  borderRadius: BorderRadius.circular(0)),
-                              child: Material(
-                                  color: Colors.transparent,
-                                  child: Text(
-                                    Strings.loginText,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(color: HexColor(ColorStrings.loginTextColor)),
-                                  ))),
-                        ),
-                        /*GestureDetector(
-                                onTap: () {
-                                  Navigator.of(context).pushNamed('/SignUpScreen');
+                              //height: 30,
+                              //color: Colors.greenAccent,
+                              margin: EdgeInsets.fromLTRB(0, 8, 40, 8),
+                              child: CheckboxListTile(
+                                activeColor: Colors.indigoAccent.withOpacity(.5),
+                                title: Text(
+                                  "Remember me",
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                                controlAffinity: ListTileControlAffinity.leading,
+                                value: rememberMe,
+                                onChanged: (value) {
+                                  print('tap');
+                                  setState(() {
+                                    rememberMe = value!;
+                                  });
                                 },
-                                child: Container(
-                                    width: double.infinity,
-                                    height: 60,
-                                    //margin: EdgeInsets.fromLTRB(40, 8, 40, 0),
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(
-                                        gradient: LinearGradient(colors: [Color(0xffe0e0ff).withOpacity(.8), Color(0xffffffff).withOpacity(1)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                                        shape: BoxShape.rectangle,
-                                        border: Border.all(color: Colors.transparent, width: 1.0),
-                                        borderRadius: BorderRadius.circular(0)),
-                                    child: new Material(
-                                        color: Colors.transparent,
-                                        child: Text(
-                                          Strings.SIGN_UP,
-                                          textAlign: TextAlign.center,
-                                        ))),
-                              ),*/
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: verticalPixel * 1,
+                        ),
+                        Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                _onLoginButtonPressed();
+                              },
+                              child: Container(
+                                  width: double.infinity,
+                                  height: 60,
+                                  //margin: EdgeInsets.fromLTRB(40, 0, 40, 0),
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                      gradient: LinearGradient(colors: [Color(0xff621fff), Color(0xff640eba)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                                      shape: BoxShape.rectangle,
+                                      border: Border.all(color: Colors.transparent, width: 1.0),
+                                      borderRadius: BorderRadius.circular(0)),
+                                  child: Material(
+                                      color: Colors.transparent,
+                                      child: Text(
+                                        Strings.loginText,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: HexColor(ColorStrings.loginTextColor)),
+                                      ))),
+                            ),
+                            /*GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).pushNamed('/SignUpScreen');
+                                  },
+                                  child: Container(
+                                      width: double.infinity,
+                                      height: 60,
+                                      //margin: EdgeInsets.fromLTRB(40, 8, 40, 0),
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                          gradient: LinearGradient(colors: [Color(0xffe0e0ff).withOpacity(.8), Color(0xffffffff).withOpacity(1)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                                          shape: BoxShape.rectangle,
+                                          border: Border.all(color: Colors.transparent, width: 1.0),
+                                          borderRadius: BorderRadius.circular(0)),
+                                      child: new Material(
+                                          color: Colors.transparent,
+                                          child: Text(
+                                            Strings.SIGN_UP,
+                                            textAlign: TextAlign.center,
+                                          ))),
+                                ),*/
+                          ],
+                        ),
+                        GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pushNamed('/ForgotPwdScreen');
+                            },
+                            child: Container(
+                                width: double.infinity,
+                                alignment: Alignment.center,
+                                margin: EdgeInsets.fromLTRB(30, 16, 40, 0),
+                                child: Text(
+                                  Strings.forgotpassword,
+                                  style: TextStyle(color: Colors.white70, decoration: TextDecoration.underline),
+                                ))),
+                        Padding(
+                            padding: EdgeInsets.fromLTRB(40, 0, 40, 0),
+                            child: RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(style: TextStyle(fontSize: 12), children: [
+                                  TextSpan(text: 'By Logging In, you agree to the ', style: TextStyle(color: Colors.white70)),
+                                  TextSpan(
+                                    text: "Terms of Use",
+                                    style: TextStyle(color: Colors.white, decoration: TextDecoration.underline),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () async {
+                                        print('tapped');
+                                      },
+                                  ),
+                                  TextSpan(text: ' for ', style: TextStyle(color: Colors.white70)),
+                                  TextSpan(text: 'Sensitel Service.', style: TextStyle(color: Colors.white)),
+                                ])))
                       ],
                     ),
-                    GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pushNamed('/ForgotPwdScreen');
-                        },
-                        child: Container(
-                            width: double.infinity,
-                            alignment: Alignment.center,
-                            margin: EdgeInsets.fromLTRB(30, 16, 40, 0),
-                            child: Text(
-                              Strings.forgotpassword,
-                              style: TextStyle(color: Colors.white70, decoration: TextDecoration.underline),
-                            ))),
-                    Padding(
-                        padding: EdgeInsets.fromLTRB(40, 0, 40, 0),
-                        child: RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(style: TextStyle(fontSize: 12), children: [
-                              TextSpan(text: 'By Logging In, you agree to the ', style: TextStyle(color: Colors.white70)),
-                              TextSpan(
-                                text: "Terms of Use",
-                                style: TextStyle(color: Colors.white, decoration: TextDecoration.underline),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () async {
-                                    print('tapped');
-                                  },
-                              ),
-                              TextSpan(text: ' for ', style: TextStyle(color: Colors.white70)),
-                              TextSpan(text: 'Sensitel Service.', style: TextStyle(color: Colors.white)),
-                            ])))
-                  ],
-                ),
-              ]),
-            )),
+                  ]),
+                )),
+            _isLoading ? Center(child: CircularProgressIndicator()) : Container(),
+          ],
+        ),
       ),
     );
   }

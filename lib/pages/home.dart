@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_svg/svg.dart';
@@ -13,7 +14,10 @@ import 'package:zebra_trackaware/globals.dart' as globals;
 import 'package:zebra_trackaware/logics/pageRoute.dart';
 import 'package:zebra_trackaware/logics/string_extension.dart';
 import 'package:zebra_trackaware/pages/tender.dart';
+import 'package:zebra_trackaware/pages/test.dart';
 import 'package:zebra_trackaware/widget/card.dart';
+
+import '../globals.dart';
 
 String greeting() {
   var hour = DateTime.now().hour;
@@ -33,10 +37,46 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   bool _isLoading = false;
+  static const EventChannel scanChannel = EventChannel('com.zebra_trackaware/scan');
+  static const MethodChannel methodChannel = MethodChannel('com.zebra_trackaware/command');
+  Future<void> _sendDataWedgeCommand(String command, String parameter) async {
+    try {
+      String argumentAsJson = "{\"command\":$command,\"parameter\":$parameter}";
+      await methodChannel.invokeMethod('sendDataWedgeCommandStringParameter', argumentAsJson);
+    } on PlatformException {
+      //  Error invoking Android method
+    }
+  }
+
+  Future<void> _createProfile(String profileName) async {
+    try {
+      await methodChannel.invokeMethod('createDataWedgeProfile', profileName);
+    } on PlatformException {
+      //  Error invoking Android method
+    }
+  }
+
+  void _onEvent(event) {
+    print('hello');
+    print(event);
+    setState(() {
+      Map barcodeScan = jsonDecode(event);
+      scannedCode = barcodeScan['scanData'];
+    });
+    print(globals.scannedCode);
+  }
+
+  void _onError(Object error) {
+    setState(() {
+      scannedCode = "Barcode: error";
+    });
+  }
 
   @override
   void initState() {
     getTodayTender();
+    _createProfile("newZebra");
+    scanChannel.receiveBroadcastStream().listen(_onEvent, onError: _onError);
     // TODO: implement initState
     super.initState();
   }
@@ -51,9 +91,14 @@ class _HomeState extends State<Home> {
             SizedBox(
               width: verticalPixel * 5,
             ),
-            Icon(
-              Entypo.dots_two_horizontal,
-              color: Color(0xff957be2),
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Icon(
+                Entypo.dots_two_horizontal,
+                color: Color(0xff957be2),
+              ),
             ),
             Text(
               "    TRACKAWARE",
@@ -84,6 +129,7 @@ class _HomeState extends State<Home> {
                     //fontWeight: FontWeight.w300,
                   ),
                 ),
+                Text('- - Today Orders: ' + globals.todayOrder!.length.toString(), style: TextStyle(color: Color(0xffffffff), fontSize: 14))
               ],
             ),
           ],
@@ -144,7 +190,9 @@ class _HomeState extends State<Home> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => Test()));
+                    },
                     child: Container(
                       width: 87,
                       height: 87,
@@ -181,45 +229,59 @@ class _HomeState extends State<Home> {
                 ],
               ),
             ),
-            Container(
-              width: 87,
-              height: 87,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 87,
-                    height: 87,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: Color(0xffe2e2e2),
-                    ),
-                    padding: EdgeInsets.only(
-                      left: verticalPixel * 2,
-                      top: 5,
-                      bottom: 62,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 51,
-                          height: 20,
-                          child: Text(
-                            "Deliver",
-                            style: TextStyle(
-                              color: Color(0xff1c1c1c),
-                              fontSize: 12,
+            GestureDetector(
+              onTap: () {
+                print('tapped');
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  content: Text("Switching Mode ... "),
+                ));
+
+                setState(() {
+                  _sendDataWedgeCommand("com.symbol.datawedge.api.SOFT_SCAN_TRIGGER", "START_SCANNING");
+                });
+              },
+              child: Container(
+                width: 87,
+                height: 87,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 87,
+                      height: 87,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Color(0xffe2e2e2),
+                      ),
+                      padding: EdgeInsets.only(
+                        left: verticalPixel * 2,
+                        top: 5,
+                        bottom: 62,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 51,
+                            height: 20,
+                            child: Text(
+                              globals.scannedCode,
+                              style: TextStyle(
+                                color: Color(0xff1c1c1c),
+                                fontSize: 12,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -268,9 +330,9 @@ class _HomeState extends State<Home> {
       ),
     ];
 
-    return Material(
-      color: Color(0xff1f1d1d),
-      child: SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: Color(0xff1f1d1d),
+      body: SingleChildScrollView(
         child: Column(
           children: homeItems,
         ),

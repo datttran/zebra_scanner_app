@@ -26,8 +26,8 @@ bool showNextButton = false;
 bool refreshDelivery = false;
 
 //String baseUrl = "http://13.57.192.146/trackaware/handheldapi";
-String baseUrl = "http://54.241.5.83/trackaware/handheldapi"; // na1
-//String baseUrl = "http://54.241.28.203/trackaware/handheldapi"; // na3
+//String baseUrl = "http://54.241.5.83/trackaware/handheldapi"; // na1
+String baseUrl = "http://54.241.28.203/trackaware/handheldapi"; // na3
 //String baseUrl = "http://50.18.108.22/trackaware/handheldapi"; // na2
 
 String serverUserName = "rkhandheldapi";

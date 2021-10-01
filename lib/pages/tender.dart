@@ -75,14 +75,6 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _createProfile(String profileName) async {
-    try {
-      await methodChannel.invokeMethod('createDataWedgeProfile', profileName);
-    } on PlatformException {
-      //  Error invoking Android method
-    }
-  }
-
   createTenderTicket(orderN, partN, toolN, type) {
     print('creating ticket');
     print(orderN);
@@ -267,7 +259,6 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
   initState() {
     createBullet();
     scanChannel.receiveBroadcastStream().listen(_onEvent, onError: _onError);
-    _createProfile("zebraScannerApp");
 
     //globals.honeywellScanner.stopScanner();
 
