@@ -14,7 +14,6 @@ import 'package:zebra_trackaware/globals.dart' as globals;
 import 'package:zebra_trackaware/logics/pageRoute.dart';
 import 'package:zebra_trackaware/logics/string_extension.dart';
 import 'package:zebra_trackaware/pages/tender.dart';
-import 'package:zebra_trackaware/pages/test.dart';
 import 'package:zebra_trackaware/widget/card.dart';
 
 import '../globals.dart';
@@ -191,7 +190,8 @@ class _HomeState extends State<Home> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => Test()));
+                      //Navigator.push(context, MaterialPageRoute(builder: (context) => Test()));
+                      setState(() {});
                     },
                     child: Container(
                       width: 87,
@@ -388,7 +388,7 @@ class _HomeState extends State<Home> {
                 },
                 child: SlimyCard(
                   index: position,
-                  color: Color(0xff4d76b5),
+                  color: Color(0xff8d8c8c),
                   width: 300,
                   topCardHeight: 150,
                   bottomCardHeight: 100,
@@ -401,7 +401,24 @@ class _HomeState extends State<Home> {
                       Text(globals.todayOrder![position].tag),
                     ],
                   ),
-                  bottomCardWidget: Text('hi'),
+                  bottomCardWidget: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {},
+                        child: Text('Cancel'),
+                        style: ElevatedButton.styleFrom(primary: Color(0xffff9793), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      ),
+                      SizedBox(
+                        width: 5,
+                      ),
+                      ElevatedButton(
+                        onPressed: () {},
+                        child: Text('Accept'),
+                        style: ElevatedButton.styleFrom(primary: Color(0xff5697ff), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      )
+                    ],
+                  ),
                 ),
               ),
             );

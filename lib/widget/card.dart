@@ -28,22 +28,24 @@ StatusBloc slimyCard = StatusBloc();
 /// assign `slimyCard.stream`. Its snapshot will contain the status.
 
 class SlimyCard extends StatefulWidget {
+  bool isActive;
   var index;
-  final Color color;
-  final double width;
-  final double topCardHeight;
-  final double bottomCardHeight;
-  final double borderRadius;
-  final Widget? topCardWidget;
-  final Widget? bottomCardWidget;
-  final bool slimeEnabled;
+  Color color;
+  double width;
+  double topCardHeight;
+  double bottomCardHeight;
+  double borderRadius;
+  Widget? topCardWidget;
+  Widget? bottomCardWidget;
+  bool slimeEnabled;
 
   SlimyCard({
+    this.isActive = false,
     this.index = 0,
     this.color = const Color(0xff5858FF),
     this.width = 300,
     this.topCardHeight = 300,
-    this.bottomCardHeight = 150,
+    this.bottomCardHeight = 100,
     this.borderRadius = 25,
     this.topCardWidget,
     this.bottomCardWidget,
@@ -87,12 +89,14 @@ class _SlimyCardState extends State<SlimyCard> with TickerProviderStateMixin {
       arrowAnimController!.reverse();
       gap = gapInitial;
       bottomDimension = initialBottomDimension;
+      globals.customCardTapped[widget.index] = false;
     } else {
       isSeperated = true;
       slimyCard.updateStatus(true);
       arrowAnimController!.forward();
       gap = gapFinal;
       bottomDimension = finalBottomDimension;
+      globals.customCardTapped[widget.index] = true;
     }
 
     activeAnimation = (activeAnimation == 'Idle') ? 'Action' : 'Idle';
@@ -141,7 +145,7 @@ class _SlimyCardState extends State<SlimyCard> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        globals.customCardTapped[widget.index] = !globals.customCardTapped[widget.index];
+        //globals.customCardTapped[widget.index] = !globals.customCardTapped[widget.index];
         setState(() {
           action();
         });
@@ -161,17 +165,17 @@ class _SlimyCardState extends State<SlimyCard> with TickerProviderStateMixin {
                   alignment: Alignment.center,
                   children: <Widget>[
                     Container(
-                      height: bottomDimension,
+                      height: 60,
                       width: widget.width,
                       decoration: BoxDecoration(
-                        color: isSeperated! ? widget.color : Colors.red,
+                        color: widget.isActive ? widget.color : Color(0xff606060),
                         borderRadius: BorderRadius.circular(widget.borderRadius),
                       ),
                       alignment: Alignment.center,
                       padding: EdgeInsets.all(10),
                       child: AnimatedOpacity(
                         duration: Duration(milliseconds: 100),
-                        opacity: (isSeperated!) ? 1.0 : 0,
+                        opacity: (isSeperated!) ? 1.0 : 1,
                         child: bottomCardWidget,
                       ),
                     ),
@@ -181,13 +185,13 @@ class _SlimyCardState extends State<SlimyCard> with TickerProviderStateMixin {
                         Container(
                           child: FlareActor(
                             'packages/slimy_card/assets/flare/bottomSlime.flr',
-                            color: widget.color.withOpacity((widget.slimeEnabled) ? 1 : 0),
+                            color: widget.color.withOpacity((widget.slimeEnabled) ? 0 : 0),
                             animation: activeAnimation,
                             sizeFromArtboard: true,
                             alignment: Alignment.bottomCenter,
                             fit: BoxFit.contain,
                           ),
-                          height: widget.width / 4,
+                          height: widget.width / 6,
                           width: widget.width,
                         ),
                         SizedBox(
