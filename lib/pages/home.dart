@@ -5,15 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_icons/flutter_icons.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:zebra_trackaware/classes/order.dart';
 import 'package:zebra_trackaware/constants.dart';
 import 'package:zebra_trackaware/globals.dart' as globals;
-import 'package:zebra_trackaware/logics/pageRoute.dart';
+import 'package:zebra_trackaware/logics/searchField.dart';
 import 'package:zebra_trackaware/logics/string_extension.dart';
-import 'package:zebra_trackaware/pages/tender.dart';
 import 'package:zebra_trackaware/widget/card.dart';
 
 import '../globals.dart';
@@ -107,7 +105,7 @@ class _HomeState extends State<Home> {
         ),
       ),
       Padding(
-        padding: EdgeInsets.symmetric(vertical: 18.0),
+        padding: EdgeInsets.symmetric(vertical: 0.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -135,190 +133,171 @@ class _HomeState extends State<Home> {
         ),
       ),
       Row(
-        children: [_isLoading ? Container(height: 300, width: horizontalPixel * 100, child: Center(child: CircularProgressIndicator())) : getOderList()],
+        children: [_isLoading ? Container(width: horizontalPixel * 100, child: Center(child: CircularProgressIndicator())) : getOderList()],
       ),
-      Container(
-        height: verticalPixel * 20,
-        width: horizontalPixel * 90,
-        color: Colors.transparent,
-        child: GridView.count(
-          crossAxisCount: 3,
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(toPage(Tender()));
-              },
-              child: Container(
-                width: 87,
-                height: 87,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 87,
-                      height: 87,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: Color(0xffe2e2e2),
-                      ),
-                      padding: EdgeInsets.only(
-                        left: verticalPixel * 2,
-                        right: 22,
-                        top: 5,
-                        bottom: 62,
-                      ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/list-svgrepo-com.svg',
-                          height: verticalPixel * 105,
-                        ),
-                      ),
-                    ),
-                  ],
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 30.0),
+        child: Container(
+            height: 200,
+            width: double.infinity,
+            child: SingleChildScrollView(
+                child: GestureDetector(
+                    onTap: () {},
+                    child: Theme(
+                        data: ThemeData(
+                            textTheme: Theme.of(context).textTheme.apply(
+                                  bodyColor: Colors.white,
+                                )),
+                        child: Builder(
+                          builder: (context) => globals.scannedTable,
+                        ))))),
+      ),
+      Stack(children: [
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: CupertinoColors.white),
+          child: SearchField(
+            hint: 'Enter barcode here',
+            marginColor: CupertinoColors.white,
+            suggestions: ['hello', 'there'],
+          ),
+        ),
+        Positioned(
+          top: 12,
+          left: 315,
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                globals.scannedTable.rows.add(DataRow(cells: [DataCell(Text('2')), DataCell(Text('h2lla')), DataCell(Text('3'))]));
+              });
+
+              /*ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                content: Text("Scanning ... "),
+              ));*/
+
+              /*setState(() {
+                _sendDataWedgeCommand("com.symbol.datawedge.api.SOFT_SCAN_TRIGGER", "START_SCANNING");
+              });*/
+            },
+            child: Container(
+              width: 77,
+              height: 26,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Color(0xff7d3de7),
+              ),
+              child: Center(
+                child: Text(
+                  'Scan',
+                  style: TextStyle(
+                    color: Color(0xffeae1ff),
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ),
+          ),
+        ),
+      ]),
+      Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
             Container(
-              width: 87,
-              height: 87,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
+              height: verticalPixel * 30,
+              width: horizontalPixel * 95,
+              decoration: BoxDecoration(color: Color(0xff2C2C34), borderRadius: BorderRadius.vertical(top: Radius.circular(15))),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      //Navigator.push(context, MaterialPageRoute(builder: (context) => Test()));
-                      setState(() {});
-                    },
-                    child: Container(
-                      width: 87,
-                      height: 87,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: Color(0xffe2e2e2),
-                      ),
-                      padding: EdgeInsets.only(
-                        left: verticalPixel * 2,
-                        right: 22,
-                        top: 5,
-                        bottom: 62,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 44,
-                            height: 20,
-                            child: Text(
-                              "Pickup",
-                              style: TextStyle(
-                                color: Color(0xff1c1c1c),
-                                fontSize: 12,
-                              ),
+                  Expanded(
+                    child: ButtonTheme(
+                      //height: verticalPixel * 2,
+                      minWidth: horizontalPixel * 95,
+                      child: RaisedButton(
+                        color: Color(0xff44444f),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          //side: BorderSide(color: Color(0xff171721)),
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 0),
+                          child: Text(
+                            'Tender',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ],
+                        ),
+                        onPressed: () async {
+                          setState(() {});
+                        },
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                print('tapped');
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  content: Text("Switching Mode ... "),
-                ));
-
-                setState(() {
-                  _sendDataWedgeCommand("com.symbol.datawedge.api.SOFT_SCAN_TRIGGER", "START_SCANNING");
-                });
-              },
-              child: Container(
-                width: 87,
-                height: 87,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 87,
-                      height: 87,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: Color(0xffe2e2e2),
-                      ),
-                      padding: EdgeInsets.only(
-                        left: verticalPixel * 2,
-                        top: 5,
-                        bottom: 62,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 51,
-                            height: 20,
-                            child: Text(
-                              globals.scannedCode,
-                              style: TextStyle(
-                                color: Color(0xff1c1c1c),
-                                fontSize: 12,
-                              ),
+                  Expanded(
+                    child: ButtonTheme(
+                      //height: verticalPixel * 8,
+                      minWidth: horizontalPixel * 95,
+                      child: RaisedButton(
+                        color: Color(0xff383841),
+                        elevation: 0,
+                        /*shape: RoundedRectangleBorder(
+                                              //side: BorderSide(color: Color(0xff171721)),
+                                              borderRadius: BorderRadius.circular(15),
+                                            ),*/
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 0,
+                          ),
+                          child: Text(
+                            'Pickup',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ],
+                        ),
+                        onPressed: () async {
+                          setState(() {});
+                        },
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      Container(
-        width: 97,
-        height: 32,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 97,
-              height: 32,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Color(0xffc4c4c4),
-              ),
-              padding: const EdgeInsets.only(
-                left: 28,
-                right: 29,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 40,
-                    height: 18,
-                    child: Text(
-                      "START",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 12,
+                  ),
+                  Expanded(
+                    child: ButtonTheme(
+                      //height: verticalPixel * 8,
+                      minWidth: horizontalPixel * 95,
+                      child: RaisedButton(
+                        color: Color(0xff2C2C34),
+                        elevation: 0,
+                        /*shape: RoundedRectangleBorder(
+                                              //side: BorderSide(color: Color(0xff171721)),
+                                              borderRadius: BorderRadius.circular(15),
+                                            ),*/
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 0),
+                          child: Text(
+                            'Deliver',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        onPressed: () async {
+                          setState(() {});
+                        },
                       ),
                     ),
                   ),
@@ -381,7 +360,7 @@ class _HomeState extends State<Home> {
           scrollDirection: Axis.horizontal,
           itemBuilder: (context, position) {
             return Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: Listener(
                 onPointerUp: (_) {
                   setState(() {});
@@ -406,16 +385,22 @@ class _HomeState extends State<Home> {
                     children: [
                       ElevatedButton(
                         onPressed: () {},
-                        child: Text('Cancel'),
-                        style: ElevatedButton.styleFrom(primary: Color(0xffff9793), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(fontWeight: FontWeight.normal),
+                        ),
+                        style: ElevatedButton.styleFrom(primary: Color(0xffec5b5b), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
                       ),
                       SizedBox(
                         width: 5,
                       ),
                       ElevatedButton(
                         onPressed: () {},
-                        child: Text('Accept'),
-                        style: ElevatedButton.styleFrom(primary: Color(0xff5697ff), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                        child: Text(
+                          'Accept',
+                          style: TextStyle(fontWeight: FontWeight.normal),
+                        ),
+                        style: ElevatedButton.styleFrom(primary: Color(0xff2CC869), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
                       )
                     ],
                   ),

@@ -165,7 +165,7 @@ class _SlimyCardState extends State<SlimyCard> with TickerProviderStateMixin {
                   alignment: Alignment.center,
                   children: <Widget>[
                     Container(
-                      height: 60,
+                      height: 50,
                       width: widget.width,
                       decoration: BoxDecoration(
                         color: widget.isActive ? widget.color : Color(0xff606060),

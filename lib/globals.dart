@@ -114,3 +114,33 @@ int trackingLimit = 15;
 //New
 List? todayOrder = [];
 List<bool> customCardTapped = [];
+
+DataTable scannedTable = DataTable(
+  columns: [
+    DataColumn(
+        label: Text(
+          'Id',
+          style: TextStyle(
+            color: Color(0xff957be2),
+          ),
+        ),
+        numeric: true),
+    DataColumn(
+        label: Text(
+      'Barcode #',
+      style: TextStyle(
+        color: Color(0xff957be2),
+      ),
+    )),
+    DataColumn(
+        label: Text(
+      'Strength',
+      style: TextStyle(
+        color: Color(0xff957be2),
+      ),
+    ))
+  ],
+  rows: [
+    DataRow(cells: [DataCell(Text('1')), DataCell(Text('')), DataCell(Text(''))])
+  ],
+);
