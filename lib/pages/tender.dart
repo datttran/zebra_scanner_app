@@ -62,7 +62,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
   // Platform messages are asynchronous, so we initialize in an async method.
   //TESTING AREA
 
-  static const EventChannel scanChannel = EventChannel('com.zebra_trackaware/scan');
+  static const EventChannel scanChannelTender = EventChannel('com.zebra_trackaware/scan');
   static const MethodChannel methodChannel = MethodChannel('com.zebra_trackaware/command');
 
   Future<void> _sendDataWedgeCommand(String command, String parameter) async {
@@ -75,7 +75,15 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
     }
   }
 
-  createTenderTicket(orderN, partN, toolN, type) {
+  Future<void> _createProfile(String profileName) async {
+    try {
+      await methodChannel.invokeMethod('createDataWedgeProfile', profileName);
+    } on PlatformException {
+      //  Error invoking Android method
+    }
+  }
+
+  createTenderTicket(barcode) {
     print('creating ticket');
     print(orderN);
     print(partN);
@@ -115,124 +123,17 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
   }
 
   String? scannedCode;
-
+  List<String> scannedList = [];
   void _onEvent(event) {
     setState(() {
       Map barcodeScan = jsonDecode(event);
       scannedCode = barcodeScan['scanData'];
+      List<String> tempList = scannedCode!.split('\n');
+      tempList = tempList + scannedList;
+      scannedList = tempList.toSet().toList();
+      scannedList.sort();
+      print(scannedList);
     });
-    if (checkLocationField()) {
-      if (true /*globals.lengthLimit == result.toString().length.toString()*/) {
-        if (fieldTapped == false) {
-          var i = ticketHolder.indexOf('');
-          print('i: ' + i.toString());
-          bool auto = autoField(scannedCode);
-          type.add(auto);
-          print(type);
-
-          print(auto.toString() + '1');
-          if (auto != true && globals.tenderLock == false) {
-            if (ticketHolder[0] == '') {
-              /*if (result.length == 7) {
-              partN.text = 'KIT-000000-001';
-              ticketHolder[1] = 'KIT-000000-001';
-            }*/
-              setState(() {
-                orderN.text = scannedCode!;
-                ticketHolder[0] = scannedCode;
-                createBullet();
-
-                showToast('Order Number Scanned', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
-              });
-              i = ticketHolder.indexOf('');
-              if (i == 2) {
-                setState(() {
-                  showToast('Please insert tool number', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
-                  isOpen = true;
-                  height = verticalPixel * 50;
-                });
-              }
-            } else if (ticketHolder[1] == '') {
-              setState(() {
-                partN.text = scannedCode!;
-                ticketHolder[1] = scannedCode;
-                createBullet();
-
-                showToast('Container Number Scanned', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
-              });
-
-              /*if (ticketHolder.length == 3 && ticketHolder[2] == "") {
-              setState(() {
-                showToast('Container Number Scanned \nPlease insert tool number', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
-                isOpen = true;
-                height = verticalPixel * 50;
-              });
-            }*/
-            } else if (ticketHolder[2] == '') {
-              setState(() {
-                toolN.text = scannedCode!;
-                ticketHolder[2] = scannedCode;
-                createBullet();
-
-                showToast('Tracking Number Scanned', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
-              });
-
-              /*if (ticketHolder.length == 3 && ticketHolder[2] == "") {
-              setState(() {
-                showToast('Container Number Scanned \nPlease insert tool number', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
-                isOpen = true;
-                height = verticalPixel * 50;
-              });
-            }*/
-            }
-          }
-
-          if (!ticketHolder.contains('')) {
-            print('TODO://Creating ticket');
-            createTenderTicket(orderN.text, partN.text, toolN.text, type.reduce((a, b) => a & b));
-            type = [];
-            print(ticketHolder);
-            showToast('Order Created', context: context, axis: Axis.horizontal, alignment: Alignment.bottomCenter, position: StyledToastPosition.center);
-            print(globals.tenderList);
-
-            //Finished
-            ticketHolder = globals.useToolNumber
-                ? [orderLocked ? orderN.text = orderN.text : orderN.text = '', partLocked ? partN.text = partN.text : partN.text = '', toolLocked ? toolN.text = toolN.text : toolN.text = '']
-                : [orderLocked ? orderN.text = orderN.text : orderN.text = '', partLocked ? partN.text = partN.text : partN.text = ''];
-            print(globals.tenderList);
-            setState(() {
-              isOpen = false;
-              height = verticalPixel * 20;
-              //quantity.text = '1';
-              createBullet();
-            });
-          }
-          print(ticketHolder);
-        } else {
-          print('fill field');
-          if (tappedField == 0) {
-            setState(() {
-              orderN.text = scannedCode!;
-              ticketHolder[0] = scannedCode;
-            });
-          } else if (tappedField == 1) {
-            setState(() {
-              partN.text = scannedCode!;
-              ticketHolder[1] = scannedCode;
-            });
-          } else if (tappedField == 2) {
-            setState(() {
-              toolN.text = scannedCode!;
-              ticketHolder[2] = scannedCode;
-            });
-          } else {
-            print('fail! unknown tappedField');
-          }
-        }
-      } else {
-        showToast('This barcode is not supported', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
-      }
-    }
 
     SystemChrome.restoreSystemUIOverlays();
   }
@@ -258,12 +159,22 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
   @override
   initState() {
     createBullet();
-    scanChannel.receiveBroadcastStream().listen(_onEvent, onError: _onError);
+    _createProfile("TenderPage");
+    scanChannelTender.receiveBroadcastStream().listen(_onEvent, onError: _onError);
 
     //globals.honeywellScanner.stopScanner();
 
     //_controllerO.text = globals.currentSite;
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    pickUpPartCount = -1;
+    pickUpExternalCount = -1;
+
+    //pickupScanner.stopScanner();
+    super.dispose();
   }
 
   List ticketHolder = globals.useToolNumber ? [orderN.text, partN.text, toolN.text] : [orderN.text, partN.text];
@@ -330,13 +241,13 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
       showToast('Please Select: Origin Location', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
       setState(() {
         isOpen = true;
-        height = verticalPixel * 80;
+        height = vP * 80;
       });
       return false;
     } else if (_controllerD.text == '') {
       setState(() {
         isOpen = true;
-        height = verticalPixel * 80;
+        height = vP * 80;
       });
       showToast('Please Select: Destination', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
       return false;
@@ -369,99 +280,12 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
               borderRadius: BorderRadius.circular(30),
               child: Align(
                   alignment: Alignment.topCenter,
-                  child: ListView.builder(
-                    scrollDirection: Axis.vertical,
-                    padding: EdgeInsets.fromLTRB(0, verticalPixel * 2, 0, 0),
-                    shrinkWrap: false,
-                    itemBuilder: (context, position) {
-                      if (position == 0 && globals.tenderList.length == 0) {
-                        return GestureDetector(
-                            onTap: () {
-                              FocusScope.of(context).requestFocus(FocusNode());
-                              fieldTapped = false;
-                              setState(() {
-                                SystemChrome.restoreSystemUIOverlays();
-                              });
-                            },
-                            child: tenderCard());
-                      }
-                      if (position == 0 && globals.tenderList.length > 2) {
-                        return Column(
-                          children: [
-                            GestureDetector(
-                                onTap: () {
-                                  FocusScope.of(context).requestFocus(FocusNode());
-                                  fieldTapped = false;
-                                  setState(() {
-                                    SystemChrome.restoreSystemUIOverlays();
-                                  });
-                                },
-                                child: tenderCard()),
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  globals.tenderList.clear();
-                                  //DBProvider.db.deleteAllPickupPart();
-                                  showToast('Success! All items were removed', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
-                                });
-                              },
-                              child: Container(
-                                margin: EdgeInsets.symmetric(vertical: verticalPixel * 2),
-                                height: verticalPixel * 5,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Color(0xfff30a37),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsets.only(top: verticalPixel * 0.3),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(bottom: 1.5),
-                                        child: Icon(
-                                          FontAwesome.remove,
-                                          color: Colors.white70,
-                                          size: 15,
-                                        ),
-                                      ),
-                                      Text(
-                                        ' Remove all    ',
-                                        style: TextStyle(color: Colors.white70, fontSize: 12),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                        position = 0;
-                      }
-                      if (position == 0 && globals.tenderList.length > 0) {
-                        return Column(
-                          children: [
-                            GestureDetector(
-                                onTap: () {
-                                  FocusScope.of(context).requestFocus(FocusNode());
-                                  fieldTapped = false;
-                                  setState(() {
-                                    SystemChrome.restoreSystemUIOverlays();
-                                  });
-                                },
-                                child: tenderCard()),
-                            SizedBox(
-                              height: 10,
-                            ),
-                          ],
-                        );
-                        position = 0;
-                      }
-
-                      return pickupCard(position - 1);
-                    },
-                    itemCount: globals.tenderList.length + 1,
+                  child: Column(
+                    children: [
+                      tenderCard(),
+                      SizedBox(height: 20),
+                      scannedList.length > 0 ? pickupCard() : Container(),
+                    ],
                   )),
             )));
   }
@@ -470,8 +294,8 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Container(
-        height: verticalPixel * 25,
-        width: horizontalPixel * 93,
+        height: vP * 25,
+        width: hP * 93,
         decoration: new BoxDecoration(
           gradient: new LinearGradient(
               colors: [Color(0xffffffff).withOpacity(0.1), Color(0xcbd2e2ff).withOpacity(0.1)], begin: Alignment.topLeft, end: Alignment.bottomRight, stops: [0.0, 1.0], tileMode: TileMode.clamp),
@@ -482,7 +306,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
             child: Container(
-              width: horizontalPixel * 70,
+              width: hP * 70,
               child: Padding(
                   padding: const EdgeInsets.only(top: 30),
                   child: Column(
@@ -541,7 +365,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                       Row(
                         children: [
                           SizedBox(
-                            width: horizontalPixel * 15,
+                            width: hP * 15,
                           ),
                           Text(
                             'Origin',
@@ -550,13 +374,13 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                         ],
                       ),
                       SizedBox(
-                        height: verticalPixel * 1,
+                        height: vP * 1,
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           Container(
-                            width: horizontalPixel * 70,
+                            width: hP * 70,
                             child: TextField(
                               controller: _controllerO,
                               readOnly: true,
@@ -592,12 +416,12 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                         ],
                       ),
                       SizedBox(
-                        height: verticalPixel * 1,
+                        height: vP * 1,
                       ),
                       Row(
                         children: [
                           SizedBox(
-                            width: horizontalPixel * 15,
+                            width: hP * 15,
                           ),
                           Text(
                             'Destination',
@@ -606,13 +430,13 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                         ],
                       ),
                       SizedBox(
-                        height: verticalPixel * 1,
+                        height: vP * 1,
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           Container(
-                            width: horizontalPixel * 70,
+                            width: hP * 70,
                             child: TextField(
                               controller: _controllerD,
                               readOnly: true,
@@ -658,13 +482,13 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
   }*/
   double _quantity = 1;
   bool isOpen = false;
-  double height = verticalPixel * 20;
+  double height = vP * 20;
   Widget tenderCard() {
     return Padding(
       padding: EdgeInsets.only(top: 0.0),
       child: AnimatedContainer(
         height: height,
-        width: horizontalPixel * 93,
+        width: hP * 93,
         decoration: new BoxDecoration(
           gradient: new LinearGradient(
               colors: [Color(0xffffffff).withOpacity(0.1), Color(0xcbd2e2ff).withOpacity(0.1)], begin: Alignment.topLeft, end: Alignment.bottomRight, stops: [0.0, 1.0], tileMode: TileMode.clamp),
@@ -676,7 +500,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
             child: Container(
-              width: horizontalPixel * 70,
+              width: hP * 70,
               child: Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: ListView(
@@ -706,7 +530,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                             setState(() {
                               fieldTapped = false;
                               isOpen = !isOpen;
-                              height = isOpen == true ? verticalPixel * 80 : verticalPixel * 20;
+                              height = isOpen == true ? vP * 80 : vP * 20;
                             });
 
                             print(isOpen);
@@ -718,7 +542,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                     Row(
                                       children: [
                                         SizedBox(
-                                          width: horizontalPixel * 15,
+                                          width: hP * 15,
                                         ),
                                         Text(
                                           'Origin',
@@ -730,7 +554,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                                       children: [
                                         Container(
-                                          width: horizontalPixel * 70,
+                                          width: hP * 70,
                                           child: TextField(
                                             controller: _controllerO,
                                             readOnly: true,
@@ -766,12 +590,12 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                       ],
                                     ), // ORIGIN
                                     SizedBox(
-                                      height: verticalPixel * 5,
+                                      height: vP * 5,
                                     ),
                                     Row(
                                       children: [
                                         SizedBox(
-                                          width: horizontalPixel * 15,
+                                          width: hP * 15,
                                         ),
                                         Text(
                                           'Destination',
@@ -780,13 +604,13 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                       ],
                                     ),
                                     SizedBox(
-                                      height: verticalPixel * 1,
+                                      height: vP * 1,
                                     ),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                                       children: [
                                         Container(
-                                          width: horizontalPixel * 70,
+                                          width: hP * 70,
                                           child: TextField(
                                             controller: _controllerD,
                                             readOnly: true,
@@ -822,12 +646,12 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                       ],
                                     ), // DESTINATION
                                     SizedBox(
-                                      height: verticalPixel * 5,
+                                      height: vP * 5,
                                     ),
                                     Row(
                                       children: [
                                         SizedBox(
-                                          width: horizontalPixel * 15,
+                                          width: hP * 15,
                                         ),
                                         Text(
                                           'Quantity',
@@ -836,13 +660,13 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                       ],
                                     ),
                                     SizedBox(
-                                      height: verticalPixel * 1,
+                                      height: vP * 1,
                                     ),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                                       children: [
                                         Container(
-                                          width: horizontalPixel * 70,
+                                          width: hP * 70,
                                           child: TextField(
                                             controller: quantity,
                                             readOnly: false,
@@ -882,333 +706,8 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                         ),
                                       ],
                                     ), // QUANTITY
-                                    SizedBox(
-                                      height: verticalPixel * 5,
-                                    ),
-                                    Row(
-                                      children: [
-                                        SizedBox(
-                                          width: horizontalPixel * 15,
-                                        ),
-                                        Text(
-                                          'Order ID *',
-                                          style: TextStyle(color: Colors.white70),
-                                        ),
-                                        SizedBox(
-                                          width: 93,
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            orderLocked = !orderLocked;
-                                            setState(() {
-                                              if (orderLocked) {
-                                                iconO = Icon(
-                                                  FontAwesome.lock,
-                                                  color: Colors.redAccent,
-                                                  size: 15,
-                                                );
-                                              } else {
-                                                iconO = Icon(
-                                                  FontAwesome.unlock,
-                                                  color: Colors.greenAccent,
-                                                  size: 15,
-                                                );
-                                              }
-                                            });
-                                          },
-                                          child: Container(height: 30, width: 50, color: Colors.transparent, child: iconO),
-                                        )
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: verticalPixel * 1,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Container(
-                                          width: horizontalPixel * 70,
-                                          child: TextField(
-                                            onSubmitted: (value) {
-                                              fieldTapped = false;
-                                            },
-                                            controller: orderN,
-                                            readOnly: false,
-                                            onTap: () {
-                                              fieldTapped = true;
-                                              tappedField = 0;
-                                            },
-                                            style: TextStyle(color: Color(0xffc5c5cb)),
-                                            keyboardType: TextInputType.number,
-                                            onChanged: (value) {
-                                              ticketHolder[0] = value;
-                                              setState(() {
-                                                createBullet();
-                                              });
-                                              //Do something with the user input.
-                                            },
-                                            decoration: InputDecoration(
-                                              hintText: 'Order ID',
-                                              suffixIcon: Visibility(
-                                                visible: orderN.text != '',
-                                                child: IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      ticketHolder[0] = '';
-                                                      type[0] = true;
-                                                      createBullet();
-                                                    });
-                                                    orderN.clear();
-                                                  },
-                                                  icon: Icon(
-                                                    Icons.clear,
-                                                    color: Colors.white,
-                                                    size: 18,
-                                                  ),
-                                                ),
-                                              ),
-                                              hintStyle: TextStyle(color: Colors.white70.withOpacity(.2)),
-                                              contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-                                              border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                              ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Color(0xff8091ff), width: .5),
-                                                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Color(0xff4d5cde), width: 1.0),
-                                                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ), // ORDER NUMBER
-                                    SizedBox(
-                                      height: verticalPixel * 5,
-                                    ),
-                                    Row(
-                                      children: [
-                                        SizedBox(
-                                          width: horizontalPixel * 15,
-                                        ),
-                                        Text(
-                                          'Container ID *',
-                                          style: TextStyle(color: Colors.white70),
-                                        ),
-                                        SizedBox(
-                                          width: 30,
-                                        ),
-                                        Container(
-                                          color: Colors.transparent,
-                                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                                          child: Center(
-                                            child: Text(
-                                              'KIT',
-                                              style: TextStyle(color: Colors.transparent),
-                                            ),
-                                          ),
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            partLocked = !partLocked;
-                                            setState(() {
-                                              if (partLocked) {
-                                                iconP = Icon(
-                                                  FontAwesome.lock,
-                                                  color: Colors.redAccent,
-                                                  size: 15,
-                                                );
-                                              } else {
-                                                iconP = Icon(
-                                                  FontAwesome.unlock,
-                                                  color: Colors.greenAccent,
-                                                  size: 15,
-                                                );
-                                              }
-                                            });
-                                          },
-                                          child: Container(height: 30, width: 50, color: Colors.transparent, child: iconP),
-                                        )
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: verticalPixel * 1,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Container(
-                                          width: horizontalPixel * 70,
-                                          child: TextField(
-                                            readOnly: false,
-                                            controller: partN,
-                                            onSubmitted: (value) {
-                                              fieldTapped = false;
-                                            },
-                                            onTap: () {
-                                              fieldTapped = true;
-                                              tappedField = 1;
-                                            },
-                                            style: TextStyle(color: Color(0xffc5c5cb)),
-                                            keyboardType: TextInputType.number,
-                                            onChanged: (value) {
-                                              ticketHolder[1] = value;
-                                              setState(() {
-                                                createBullet();
-                                              });
 
-                                              //Do something with the user input.
-                                            },
-                                            decoration: InputDecoration(
-                                              suffixIcon: Visibility(
-                                                visible: partN.text != '',
-                                                child: IconButton(
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      ticketHolder[1] = '';
-                                                      print(type.length);
-                                                      type[1] = true;
-                                                      createBullet();
-                                                    });
-                                                    partN.clear();
-                                                  },
-                                                  icon: Icon(
-                                                    Icons.clear,
-                                                    color: Colors.white,
-                                                    size: 18,
-                                                  ),
-                                                ),
-                                              ),
-                                              hintText: 'Container ID',
-                                              hintStyle: TextStyle(color: Colors.white70.withOpacity(.2)),
-                                              contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-                                              border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                              ),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Color(0xff8091ff), width: .5),
-                                                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderSide: BorderSide(color: Color(0xff4d5cde), width: 1.0),
-                                                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ), //PART NUMBER
-                                    Visibility(
-                                      visible: globals.useToolNumber,
-                                      child: Column(
-                                        children: [
-                                          SizedBox(
-                                            height: verticalPixel * 5,
-                                          ),
-                                          Row(
-                                            children: [
-                                              SizedBox(
-                                                width: horizontalPixel * 15,
-                                              ),
-                                              Text(
-                                                'Tracking Number',
-                                                style: TextStyle(color: Colors.white70),
-                                              ),
-                                              SizedBox(
-                                                width: 50,
-                                              ),
-                                              /*GestureDetector(
-                                                onTap: () {
-                                                  toolLocked = !toolLocked;
-                                                  setState(() {
-                                                    if (toolLocked) {
-                                                      iconT = Icon(
-                                                        FontAwesome.lock,
-                                                        color: Colors.redAccent,
-                                                        size: 15,
-                                                      );
-                                                    } else {
-                                                      iconT = Icon(
-                                                        FontAwesome.unlock,
-                                                        color: Colors.greenAccent,
-                                                        size: 15,
-                                                      );
-                                                    }
-                                                  });
-                                                },
-                                                child: Container(height: 30, width: 50, color: Colors.transparent, child: iconT),
-                                              )*/
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            height: verticalPixel * 1,
-                                          ),
-                                          Container(
-                                            width: horizontalPixel * 70,
-                                            child: TextField(
-                                              onSubmitted: (value) {
-                                                fieldTapped = false;
-                                              },
-                                              controller: toolN,
-                                              readOnly: false,
-                                              onTap: () {
-                                                fieldTapped = true;
-                                                tappedField = 2;
-                                              },
-                                              style: TextStyle(color: Color(0xffc5c5cb)),
-                                              keyboardType: TextInputType.number,
-                                              onChanged: (value) {
-                                                ticketHolder[2] = value;
-                                                setState(() {
-                                                  createBullet();
-                                                });
-
-                                                //Do something with the user input.
-                                              },
-                                              decoration: InputDecoration(
-                                                suffixIcon: Visibility(
-                                                  visible: toolN.text != '',
-                                                  child: IconButton(
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        ticketHolder[2] = '';
-                                                        type[2] = true;
-                                                        createBullet();
-                                                      });
-                                                      toolN.clear();
-                                                    },
-                                                    icon: Icon(
-                                                      Icons.clear,
-                                                      color: Colors.white,
-                                                      size: 18,
-                                                    ),
-                                                  ),
-                                                ),
-                                                hintText: 'Tracking Number',
-                                                hintStyle: TextStyle(color: Colors.white70.withOpacity(.2)),
-                                                contentPadding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-                                                border: OutlineInputBorder(
-                                                  borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                                ),
-                                                enabledBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Color(0xff8091ff), width: .5),
-                                                  borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                                ),
-                                                focusedBorder: OutlineInputBorder(
-                                                  borderSide: BorderSide(color: Color(0xff4d5cde), width: 1.0),
-                                                  borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: verticalPixel * 15,
-                                    ),
+                                    // ORDER NUMBER
                                   ],
                                 ),
                                 isExpanded: isOpen,
@@ -1217,7 +716,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                     onTap: () {
                                       setState(() {
                                         isOpen = !isOpen;
-                                        height = isOpen == true ? verticalPixel * 80 : verticalPixel * 20;
+                                        height = isOpen == true ? vP * 70 : vP * 20;
                                       });
                                     },
                                     child: Container(
@@ -1225,7 +724,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                       child: Row(
                                         children: [
                                           SizedBox(
-                                            width: horizontalPixel * 15,
+                                            width: hP * 15,
                                           ),
                                           Text(
                                             'Order Details',
@@ -1248,15 +747,6 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    pickUpPartCount = -1;
-    pickUpExternalCount = -1;
-
-    //pickupScanner.stopScanner();
-    super.dispose();
   }
 
   bool _isLoading = false;
@@ -1296,8 +786,8 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Container(
-                      height: verticalPixel * 88,
-                      margin: EdgeInsets.symmetric(horizontal: horizontalPixel * 3.5, vertical: verticalPixel * 1),
+                      height: vP * 88,
+                      margin: EdgeInsets.symmetric(horizontal: hP * 3.5, vertical: vP * 1),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: BackdropFilter(
@@ -1316,14 +806,14 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                       Navigator.pop(context);
                                     },
                                     child: Container(
-                                      height: verticalPixel * 3,
+                                      height: vP * 3,
                                       width: double.infinity,
                                       decoration: BoxDecoration(
                                         color: Color(0xff171721),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Padding(
-                                        padding: EdgeInsets.only(top: verticalPixel * 0.3),
+                                        padding: EdgeInsets.only(top: vP * 0.3),
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                                           children: [
@@ -1338,15 +828,15 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                   ),
                                   /*globals.tenderList.length > 2
                                     ? Container(
-                                        margin: EdgeInsets.symmetric(vertical: verticalPixel * 2),
-                                        height: verticalPixel * 5,
+                                        margin: EdgeInsets.symmetric(vertical: vP * 2),
+                                        height: vP * 5,
                                         width: double.infinity,
                                         decoration: BoxDecoration(
                                           color: Color(0xfff30a37),
                                           borderRadius: BorderRadius.circular(20),
                                         ),
                                         child: Padding(
-                                          padding: EdgeInsets.only(top: verticalPixel * 0.3),
+                                          padding: EdgeInsets.only(top: vP * 0.3),
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
@@ -1436,14 +926,14 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                   Visibility(
                     visible: globals.popup == 0,
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: horizontalPixel * 8),
+                      padding: EdgeInsets.symmetric(horizontal: hP * 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           Expanded(
                             child: ButtonTheme(
-                              height: verticalPixel * 8,
-                              minWidth: horizontalPixel * 5,
+                              height: vP * 8,
+                              minWidth: hP * 5,
                               child: RaisedButton(
                                 color: Color(0xff7a7aff),
                                 elevation: 0,
@@ -1469,10 +959,10 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                           Visibility(
                             visible: isOpen,
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: horizontalPixel * 3),
+                              padding: EdgeInsets.symmetric(horizontal: hP * 3),
                               child: ButtonTheme(
-                                height: verticalPixel * 8,
-                                minWidth: horizontalPixel * 20,
+                                height: vP * 8,
+                                minWidth: hP * 20,
                                 child: RaisedButton(
                                   color: Color(0xff63a2ff),
                                   elevation: 0,
@@ -1480,7 +970,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                     borderRadius: BorderRadius.circular(15.0),
                                   ),
                                   child: Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: horizontalPixel * 12, vertical: 4),
+                                    padding: EdgeInsets.symmetric(horizontal: hP * 12, vertical: 4),
                                     child: Text(
                                       'Confirm',
                                       style: TextStyle(
@@ -1503,7 +993,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
 
                                       setState(() {
                                         isOpen = false;
-                                        height = verticalPixel * 20;
+                                        height = vP * 20;
                                       });
 
                                       //Finished
@@ -1519,7 +1009,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
 
                                     setState(() {
                                       isOpen = false;
-                                      height = verticalPixel * 20;
+                                      height = vP * 20;
                                       //quantity.text = '1';
                                       createBullet();
                                     });
@@ -1530,8 +1020,8 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                           ),
                           /*Expanded(
                           child: ButtonTheme(
-                            height: verticalPixel * 8,
-                            minWidth: horizontalPixel * 10,
+                            height: vP * 8,
+                            minWidth: hP * 10,
                             child: RaisedButton(
                               color: Color(0xff2C2C34),
                               elevation: 0,
@@ -1565,12 +1055,12 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
               _isLoading
                   ? Container(
                       color: Colors.transparent,
-                      height: verticalPixel * 85,
+                      height: vP * 85,
                       child: Center(
                         child: Column(
                           children: [
                             SizedBox(
-                              height: verticalPixel * 25,
+                              height: vP * 25,
                             ),
                             CircularProgressIndicator(),
                           ],
@@ -1585,7 +1075,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
     );
   }
 
-  pickupCard(position) {
+  pickupCard() {
     return Slidable(
       actionPane: SlidableScrollActionPane(),
       actions: [
@@ -1595,15 +1085,14 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
           icon: Icons.delete_forever,
           onTap: () {
             setState(() {
-              globals.tenderList.removeAt(position);
+              scannedList = [];
             });
           },
         ),
       ],
       child: GestureDetector(
         onTap: () async {
-          showToast('Order no. ${globals.tenderList[position].orderNumber}\nContainer no. ${globals.tenderList[position].partNumber}\nTracking no. ${globals.tenderList[position].toolNumber} ',
-              context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
+          showToast('Order no.  } ', context: context, axis: Axis.horizontal, alignment: Alignment.center, position: StyledToastPosition.center);
         },
         child: Card(
           elevation: 0,
@@ -1611,18 +1100,12 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          margin: EdgeInsets.fromLTRB(0, 0, 0, verticalPixel * 2),
+          margin: EdgeInsets.fromLTRB(0, 0, 0, vP * 2),
           child: Container(
               height: 110,
               decoration: new BoxDecoration(
                 gradient: new LinearGradient(
-                    colors: globals.tenderList[position].tagType == 'true'
-                        ? [Color(0xff6de1ff).withOpacity(.5), Color(0xcb508afd).withOpacity(.5)]
-                        : [Color(0xffffcfb8).withOpacity(.5), Color(0xffff8892).withOpacity(.5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    stops: [0.0, 1.0],
-                    tileMode: TileMode.clamp),
+                    colors: [Color(0xffbab8ff).withOpacity(.5), Color(0xff352eff).withOpacity(.5)], begin: Alignment.topLeft, end: Alignment.bottomRight, stops: [0.0, 1.0], tileMode: TileMode.clamp),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
@@ -1632,7 +1115,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       SizedBox(
-                        width: horizontalPixel * 1,
+                        width: hP * 1,
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -1653,12 +1136,12 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                                             bottomLeft: const Radius.circular(16.0),
                                             bottomRight: const Radius.circular(16.0))),
                                     child: Text(
-                                      " " + (globals.tenderList.length - position).toString() + " ",
+                                      " " + (2323).toString() + " ",
                                       style: TextStyle(color: Color(0xe2131313).withOpacity(.2), fontSize: 11.0, fontWeight: FontWeight.bold),
                                     )),
                               )),
                           SizedBox(
-                            height: verticalPixel * .5,
+                            height: vP * .5,
                           ),
                           Container(
                               padding: EdgeInsets.fromLTRB(20, 0, 24.0, 0.0),
@@ -1666,7 +1149,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                         ],
                       ),
                       SizedBox(
-                        width: horizontalPixel * 1,
+                        width: hP * 1,
                       ),
                       Column(
                         mainAxisAlignment: MainAxisAlignment.start,
@@ -1675,23 +1158,20 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                           Container(
 
                               //color: Colors.red,
-                              width: horizontalPixel * 35,
+                              width: hP * 35,
                               padding: EdgeInsets.fromLTRB(0.0, 12, 0.0, 0),
-                              child: Text(globals.tenderList[position].orderNumber,
+                              child: Text('${{scannedList}.toString().hashCode}',
                                   maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.left, style: const TextStyle(color: const Color(0xffffffff), fontSize: 16.0))),
                           SizedBox(
-                            height: verticalPixel * .5,
+                            height: vP * .5,
                           ),
                           Align(
                             alignment: Alignment.bottomCenter,
                             child: Container(
                                 //color: Colors.white,
-                                width: horizontalPixel * 35,
+                                width: hP * 35,
                                 padding: EdgeInsets.fromLTRB(0, 0, 10, 0),
-                                child: Text(
-                                    globals.tenderList[position].toolNumber == globals.tenderList[position].orderNumber
-                                        ? globals.tenderList[position].partNumber
-                                        : globals.tenderList[position].partNumber + ' | ' + globals.tenderList[position].toolNumber,
+                                child: Text('2131231200-C',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: TextAlign.left,
@@ -1706,7 +1186,7 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                             height: 18,
                           ),
                           Container(
-                            width: horizontalPixel * 15.57,
+                            width: hP * 15.57,
                             decoration: new BoxDecoration(
                                 color: Color(0xe2d1fffd).withOpacity(.2),
                                 borderRadius: new BorderRadius.only(
@@ -1715,23 +1195,15 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                               padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 2),
                               child: Center(
                                 child: Text(
-                                  globals.tenderList[position].priority,
-                                  style: TextStyle(
-                                      color: globals.tenderList[position].priority == 'HOT'
-                                          ? Color(0xffffffff)
-                                          : globals.tenderList[position].priority == 'P1'
-                                              ? Color(0xffffdfa0)
-                                              : Color(0xffa8ff89),
-                                      fontSize: 11.0),
+                                  '${scannedList.length}',
+                                  style: TextStyle(color: Color(0xffeae9ff), fontSize: 11.0),
                                 ),
                               ),
                             ),
                           ),
                           Container(
                               padding: EdgeInsets.fromLTRB(0, 0, 0, 0.0),
-                              child: Align(
-                                  alignment: Alignment.topRight,
-                                  child: Text('x ' + globals.tenderList[position].quantity, textAlign: TextAlign.right, style: const TextStyle(color: const Color(0xffffffff), fontSize: 11.0)))),
+                              child: Align(alignment: Alignment.topRight, child: Text('Quantity', textAlign: TextAlign.right, style: const TextStyle(color: const Color(0xffffffff), fontSize: 11.0)))),
                         ],
                       )
                       /*Icon(
@@ -1752,21 +1224,18 @@ class TenderTab extends State<Tender> with WidgetsBindingObserver {
                           Column(
                             children: <Widget>[
                               Text("Location", style: const TextStyle(color: const Color(0xff241835), fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, fontSize: 13.0)),
-                              Text(globals.tenderList[position].location != null ? globals.tenderList[position].location : "",
-                                  style: TextStyle(color: Color(0xff0e0935).withOpacity(.5), fontWeight: FontWeight.w400, fontSize: 11.0))
+                              Text("", style: TextStyle(color: Color(0xff0e0935).withOpacity(.5), fontWeight: FontWeight.w400, fontSize: 11.0))
                             ],
                           ),
                           Icon(
                             Icons.sync_alt,
-                            size: verticalPixel * 2,
+                            size: vP * 2,
                             color: Colors.white70.withOpacity(.3),
                           ),
                           Column(
                             children: <Widget>[
                               Text("Destination", style: const TextStyle(color: const Color(0xff241835), fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, fontSize: 13.0)),
-                              globals.tenderList[position].destination == null
-                                  ? Text("")
-                                  : Text(globals.tenderList[position].destination, style: TextStyle(color: Color(0xff0e0935).withOpacity(.5), fontWeight: FontWeight.w400, fontSize: 11.0))
+                              Text('', style: TextStyle(color: Color(0xff0e0935).withOpacity(.5), fontWeight: FontWeight.w400, fontSize: 11.0))
                             ],
                           ),
                         ],

@@ -10,6 +10,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:zebra_trackaware/logics/APIlogic.dart';
+import 'package:zebra_trackaware/pages/home.dart';
 import 'package:zebra_trackaware/size_config.dart';
 import 'package:zebra_trackaware/utils/colorstrings.dart';
 import 'package:zebra_trackaware/utils/strings.dart';
@@ -19,7 +20,6 @@ import 'constants.dart';
 import 'globals.dart' as globals;
 import 'logics/location_response.dart';
 import 'logics/pageRoute.dart';
-import 'pages/home.dart';
 
 getLocation() async {
   bool serviceEnabled;
@@ -248,7 +248,7 @@ class _MyHomePageState extends State<MyHomePage> {
         color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(5),
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: verticalPixel * .8, horizontal: 5),
+          padding: EdgeInsets.symmetric(vertical: vP * .8, horizontal: 5),
           child: TextFormField(
             style: TextStyle(color: HexColor(ColorStrings.emailPwdTextColor), fontSize: 16),
             autofocus: false,
@@ -283,7 +283,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       color: HexColor(ColorStrings.emailPwdTextColor),
-                      fontSize: verticalPixel * 1.8,
+                      fontSize: vP * 1.8,
                     ),
                   ),
                 ],
@@ -300,7 +300,7 @@ class _MyHomePageState extends State<MyHomePage> {
         color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(5),
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: verticalPixel * .8, horizontal: 4),
+          padding: EdgeInsets.symmetric(vertical: vP * .8, horizontal: 4),
           child: TextFormField(
             focusNode: _passwordFocus,
             autofocus: false,
@@ -336,7 +336,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       color: HexColor(ColorStrings.emailPwdTextColor),
-                      fontSize: verticalPixel * 1.8,
+                      fontSize: vP * 1.8,
                     ),
                   ),
                 ],
@@ -381,6 +381,8 @@ class _MyHomePageState extends State<MyHomePage> {
         var result = await userLogin(emailController.text, passwordController.text);
 
         if (result == 'Valid User') {
+          //Navigator.of(context).push(toPage(Home()));
+
           Navigator.of(context).push(toPage(Home()));
         } else {
           print(result);
@@ -421,7 +423,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       'T R A C K   '
                       ' A W A R E',
                       style: TextStyle(
-                        fontSize: verticalPixel * 25,
+                        fontSize: vP * 25,
                       ),
                     ),
                     Column(
@@ -438,13 +440,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
                                 /*SvgPicture.asset(
                                       "assets/logo.svg",
-                                      height: verticalPixel*20,
+                                      height: vP*20,
                                       color: Colors.white70,
                                     ),*/
                               ],
                             )),
                         SizedBox(
-                          height: verticalPixel * 7,
+                          height: vP * 7,
                         ),
                         Column(
                           children: [
@@ -474,7 +476,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           ],
                         ),
                         SizedBox(
-                          height: verticalPixel * 1,
+                          height: vP * 1,
                         ),
                         Column(
                           children: [

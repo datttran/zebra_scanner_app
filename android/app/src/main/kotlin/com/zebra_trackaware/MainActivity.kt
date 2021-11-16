@@ -2,6 +2,7 @@ package com.zebra_trackaware
 
 import android.content.*
 import android.os.Bundle
+import android.os.Parcelable
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
@@ -12,6 +13,7 @@ import io.flutter.plugins.GeneratedPluginRegistrant
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 //  This sample implementation is heavily based on the flutter demo at
 //  https://github.com/flutter/flutter/blob/master/examples/platform_channel/android/app/src/main/java/com/example/platformchannel/MainActivity.java
@@ -82,7 +84,7 @@ class MainActivity: FlutterActivity() {
                     var date = Calendar.getInstance().getTime()
                     var df = SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
                     var dateTimeString = df.format(date)
-                    var currentScan = Scan(scanData,   symbology, dateTimeString);
+                    var currentScan = Scan(scanData, symbology, dateTimeString);
                     events?.success(currentScan.toJson())
                 }
                 //  Could handle return values from DW here such as RETURN_GET_ACTIVE_PROFILE
@@ -101,15 +103,40 @@ class MainActivity: FlutterActivity() {
         profileConfig.putString("CONFIG_MODE", "UPDATE")
         val barcodeConfig = Bundle()
         barcodeConfig.putString("PLUGIN_NAME", "BARCODE")
-        barcodeConfig.putString("RESET_CONFIG", "true") //  This is the default but never hurts to specify
+        barcodeConfig.putString("RESET_CONFIG", "false") //  This is the default but never hurts to specify
         val barcodeProps = Bundle()
         barcodeConfig.putBundle("PARAM_LIST", barcodeProps)
         profileConfig.putBundle("PLUGIN_CONFIG", barcodeConfig)
+
+
+
+        val rfidConfigParamList = Bundle()
+        rfidConfigParamList.putString("rfid_input_enabled", "true")
+        rfidConfigParamList.putString("rfid_beeper_enable", "true")
+        rfidConfigParamList.putString("rfid_led_enable", "true")
+        rfidConfigParamList.putString("rfid_antenna_transmit_power", "30")
+        rfidConfigParamList.putString("rfid_memory_bank", "2")
+        rfidConfigParamList.putString("rfid_session", "1")
+        rfidConfigParamList.putString("rfid_trigger_mode", "1")
+        rfidConfigParamList.putString("rfid_filter_duplicate_tags", "true")
+        rfidConfigParamList.putString("rfid_hardware_trigger_enabled", "true")
+        rfidConfigParamList.putString("rfid_tag_read_duration", "250")
+
+
+        val rfidConfigBundle = Bundle()
+        rfidConfigBundle.putString("PLUGIN_NAME", "RFID")
+        rfidConfigBundle.putString("RESET_CONFIG", "false")
+        rfidConfigBundle.putBundle("PARAM_LIST", rfidConfigParamList)
+        profileConfig.putBundle("PLUGIN_CONFIG", rfidConfigParamList)
+
         val appConfig = Bundle()
-        appConfig.putString("PACKAGE_NAME", packageName)      //  Associate the profile with this app
+        appConfig.putString("PACKAGE_NAME", packageName)
         appConfig.putStringArray("ACTIVITY_LIST", arrayOf("*"))
         profileConfig.putParcelableArray("APP_LIST", arrayOf(appConfig))
         dwInterface.sendCommandBundle(this, DWInterface.DATAWEDGE_SEND_SET_CONFIG, profileConfig)
+
+
+
         //  You can only configure one plugin at a time in some versions of DW, now do the intent output
         profileConfig.remove("PLUGIN_CONFIG")
         val intentConfig = Bundle()
@@ -122,5 +149,88 @@ class MainActivity: FlutterActivity() {
         intentConfig.putBundle("PARAM_LIST", intentProps)
         profileConfig.putBundle("PLUGIN_CONFIG", intentConfig)
         dwInterface.sendCommandBundle(this, DWInterface.DATAWEDGE_SEND_SET_CONFIG, profileConfig)
+
+/*        dwInterface.sendCommandString(this, DWInterface.DATAWEDGE_SEND_CREATE_PROFILE, profileName)
+        val setConfigBundle = Bundle()
+        setConfigBundle.putString("PROFILE_NAME", profileName)
+        setConfigBundle.putString("PROFILE_ENABLED", "true")
+        setConfigBundle.putString("CONFIG_MODE", "CREATE_IF_NOT_EXIST")
+        setConfigBundle.putString("RESET_CONFIG", "false")
+
+        // Associate profile with this app
+
+        // Associate profile with this app
+        val appConfig = Bundle()
+        appConfig.putString("PACKAGE_NAME", getPackageName())
+        appConfig.putStringArray("ACTIVITY_LIST", arrayOf("*"))
+        setConfigBundle.putParcelableArray("APP_LIST", arrayOf(appConfig))
+        setConfigBundle.remove("PLUGIN_CONFIG")*/
+
+        // Set RFID configuration
+
+/*        // Set RFID configuration
+        val rfidConfigParamList = Bundle()
+        rfidConfigParamList.putString("rfid_input_enabled", "true")
+        rfidConfigParamList.putString("rfid_beeper_enable", "true")
+        rfidConfigParamList.putString("rfid_led_enable", "true")
+        rfidConfigParamList.putString("rfid_antenna_transmit_power", "30")
+        rfidConfigParamList.putString("rfid_hardware_key", "2")
+        rfidConfigParamList.putString("rfid_memory_bank", "2")
+        rfidConfigParamList.putString("rfid_session", "1")
+        rfidConfigParamList.putString("rfid_trigger_mode", "0")
+        rfidConfigParamList.putString("rfid_filter_duplicate_tags", "true")
+        rfidConfigParamList.putString("rfid_hardware_trigger_enabled", "true")
+        rfidConfigParamList.putString("rfid_tag_read_duration", "250")
+
+        // Pre-filter
+
+        // Pre-filter
+        rfidConfigParamList.putString("rfid_pre_filter_enable", "true")
+        rfidConfigParamList.putString("rfid_pre_filter_tag_pattern", "3EC")
+        rfidConfigParamList.putString("rfid_pre_filter_target", "2")
+        rfidConfigParamList.putString("rfid_pre_filter_memory_bank", "2")
+        rfidConfigParamList.putString("rfid_pre_filter_offset", "2")
+        rfidConfigParamList.putString("rfid_pre_filter_action", "2")
+
+        // Post-filter
+
+        // Post-filter
+        rfidConfigParamList.putString("rfid_post_filter_enable", "true")
+        rfidConfigParamList.putString("rfid_post_filter_no_of_tags_to_read", "2")
+        rfidConfigParamList.putString("rfid_post_filter_rssi", "-54")
+
+        val rfidConfigBundle = Bundle()
+        rfidConfigBundle.putString("PLUGIN_NAME", "RFID")
+        rfidConfigBundle.putString("RESET_CONFIG", "true")
+        rfidConfigBundle.putBundle("PARAM_LIST", rfidConfigParamList)
+
+        // Configure intent output for captured data to be sent to this app
+
+        // Configure intent output for captured data to be sent to this app
+        val intentConfig = Bundle()
+        intentConfig.putString("PLUGIN_NAME", "INTENT")
+        intentConfig.putString("RESET_CONFIG", "true")
+        val intentProps = Bundle()
+        intentProps.putString("intent_output_enabled", "true")
+        intentProps.putString("intent_action", "com.zebra.rfid.rwdemo.RWDEMO")
+        intentProps.putString("intent_category", "android.intent.category.DEFAULT")
+        intentProps.putString("intent_delivery", "0")
+        intentConfig.putBundle("PARAM_LIST", intentProps)
+
+        // Add configurations into a collection
+
+        // Add configurations into a collection
+        val configBundles = ArrayList<Parcelable>()
+        configBundles.add(rfidConfigBundle)
+        configBundles.add(intentConfig)
+        setConfigBundle.putParcelableArrayList("PLUGIN_CONFIG", configBundles)
+
+        // Broadcast the intent
+
+        // Broadcast the intent
+        val intent = Intent()
+        intent.action = "com.symbol.datawedge.api.ACTION"
+        intent.putExtra("com.symbol.datawedge.api.SET_CONFIG", setConfigBundle)
+        sendBroadcast(intent)*/
     }
 }

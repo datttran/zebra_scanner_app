@@ -70,7 +70,7 @@ class _SlimyCardState extends State<SlimyCard> with TickerProviderStateMixin {
   double? gapFinal;
   double? x;
   double? y;
-  String? activeAnimation;
+  late String activeAnimation;
   Widget? topCardWidget;
   Widget? bottomCardWidget;
 

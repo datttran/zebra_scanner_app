@@ -12,6 +12,7 @@ import 'package:zebra_trackaware/constants.dart';
 import 'package:zebra_trackaware/globals.dart' as globals;
 import 'package:zebra_trackaware/logics/searchField.dart';
 import 'package:zebra_trackaware/logics/string_extension.dart';
+import 'package:zebra_trackaware/pages/tender.dart';
 import 'package:zebra_trackaware/widget/card.dart';
 
 import '../globals.dart';
@@ -34,8 +35,96 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   bool _isLoading = false;
+  DataTable scannedTable = DataTable(
+    key: UniqueKey(),
+    columns: [
+      DataColumn(
+          label: Text(
+            'Id',
+            style: TextStyle(
+              color: Color(0xff957be2),
+            ),
+          ),
+          numeric: true),
+      DataColumn(
+          label: Text(
+        'Barcode #',
+        style: TextStyle(
+          color: Color(0xff957be2),
+        ),
+      )),
+      DataColumn(
+          label: Text(
+        'Strength',
+        style: TextStyle(
+          color: Color(0xff957be2),
+        ),
+      ))
+    ],
+    rows: [
+      //DataRow(cells: [DataCell(Text('1')), DataCell(Text('')), DataCell(Text(''))])
+    ],
+  );
   static const EventChannel scanChannel = EventChannel('com.zebra_trackaware/scan');
   static const MethodChannel methodChannel = MethodChannel('com.zebra_trackaware/command');
+
+  Widget table(barcode) {
+    listTable = barcode.split('\n');
+    List<String> temp = listTable.toSet().toList();
+    globals.listTable = temp;
+    List<Widget> entry = [];
+    int i = 1;
+
+    listTable.forEach((element) {
+      entry.add(Row(
+        children: [
+          SizedBox(
+            width: hP * 5.5,
+          ),
+          Text(
+            i.toString(),
+            style: TextStyle(color: Colors.white),
+          ),
+          SizedBox(
+            width: hP * 10,
+          ),
+          Text(
+            element,
+            style: TextStyle(color: Colors.white),
+          ),
+        ],
+      ));
+      i = i + 1;
+    });
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: hP * 5,
+            ),
+            Text(
+              'Id',
+              style: TextStyle(color: Color(0xff6038f6), fontSize: vP * 3),
+            ),
+            SizedBox(
+              width: hP * 20,
+            ),
+            Text(
+              'Barcode #',
+              style: TextStyle(color: Color(0xff6038f6), fontSize: vP * 3),
+            )
+          ],
+        ),
+        Column(
+          children: entry,
+        )
+      ],
+    );
+  }
+
   Future<void> _sendDataWedgeCommand(String command, String parameter) async {
     try {
       String argumentAsJson = "{\"command\":$command,\"parameter\":$parameter}";
@@ -54,13 +143,12 @@ class _HomeState extends State<Home> {
   }
 
   void _onEvent(event) {
-    print('hello');
-    print(event);
     setState(() {
       Map barcodeScan = jsonDecode(event);
+
       scannedCode = barcodeScan['scanData'];
+      scannedTable.rows.add(DataRow(cells: [DataCell(Text((scannedTable.rows.length + 1).toString())), DataCell(Text(globals.scannedCode)), DataCell(Text(''))]));
     });
-    print(globals.scannedCode);
   }
 
   void _onError(Object error) {
@@ -72,7 +160,7 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     getTodayTender();
-    _createProfile("newZebra");
+    _createProfile("RFIDPage");
     scanChannel.receiveBroadcastStream().listen(_onEvent, onError: _onError);
     // TODO: implement initState
     super.initState();
@@ -86,7 +174,7 @@ class _HomeState extends State<Home> {
         child: Row(
           children: [
             SizedBox(
-              width: verticalPixel * 5,
+              width: vP * 5,
             ),
             GestureDetector(
               onTap: () {
@@ -110,7 +198,7 @@ class _HomeState extends State<Home> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             SizedBox(
-              width: verticalPixel * 5,
+              width: vP * 5,
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,24 +221,11 @@ class _HomeState extends State<Home> {
         ),
       ),
       Row(
-        children: [_isLoading ? Container(width: horizontalPixel * 100, child: Center(child: CircularProgressIndicator())) : getOderList()],
+        children: [_isLoading ? Container(width: hP * 100, child: Center(child: CircularProgressIndicator())) : getOderList()],
       ),
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30.0),
-        child: Container(
-            height: 200,
-            width: double.infinity,
-            child: SingleChildScrollView(
-                child: GestureDetector(
-                    onTap: () {},
-                    child: Theme(
-                        data: ThemeData(
-                            textTheme: Theme.of(context).textTheme.apply(
-                                  bodyColor: Colors.white,
-                                )),
-                        child: Builder(
-                          builder: (context) => globals.scannedTable,
-                        ))))),
+        padding: EdgeInsets.symmetric(horizontal: hP * 2),
+        child: Container(height: 200, width: double.infinity, child: SingleChildScrollView(child: table(globals.scannedCode))),
       ),
       Stack(children: [
         Container(
@@ -160,17 +235,15 @@ class _HomeState extends State<Home> {
           child: SearchField(
             hint: 'Enter barcode here',
             marginColor: CupertinoColors.white,
-            suggestions: ['hello', 'there'],
+            suggestions: globals.listTable,
           ),
         ),
         Positioned(
           top: 12,
-          left: 315,
+          left: hP * 70,
           child: GestureDetector(
             onTap: () {
-              setState(() {
-                globals.scannedTable.rows.add(DataRow(cells: [DataCell(Text('2')), DataCell(Text('h2lla')), DataCell(Text('3'))]));
-              });
+              setState(() {});
 
               /*ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 backgroundColor: Colors.transparent,
@@ -208,8 +281,8 @@ class _HomeState extends State<Home> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Container(
-              height: verticalPixel * 30,
-              width: horizontalPixel * 95,
+              height: vP * 30,
+              width: hP * 95,
               decoration: BoxDecoration(color: Color(0xff2C2C34), borderRadius: BorderRadius.vertical(top: Radius.circular(15))),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -217,8 +290,8 @@ class _HomeState extends State<Home> {
                 children: [
                   Expanded(
                     child: ButtonTheme(
-                      //height: verticalPixel * 2,
-                      minWidth: horizontalPixel * 95,
+                      //height: vP * 2,
+                      minWidth: hP * 95,
                       child: RaisedButton(
                         color: Color(0xff44444f),
                         elevation: 0,
@@ -238,15 +311,16 @@ class _HomeState extends State<Home> {
                           ),
                         ),
                         onPressed: () async {
-                          setState(() {});
+                          Navigator.push(context, CupertinoPageRoute(builder: (BuildContext context) => Tender()))
+                              .then((value) => scanChannel.receiveBroadcastStream().listen(_onEvent, onError: _onError));
                         },
                       ),
                     ),
                   ),
                   Expanded(
                     child: ButtonTheme(
-                      //height: verticalPixel * 8,
-                      minWidth: horizontalPixel * 95,
+                      //height: vP * 8,
+                      minWidth: hP * 95,
                       child: RaisedButton(
                         color: Color(0xff383841),
                         elevation: 0,
@@ -275,8 +349,8 @@ class _HomeState extends State<Home> {
                   ),
                   Expanded(
                     child: ButtonTheme(
-                      //height: verticalPixel * 8,
-                      minWidth: horizontalPixel * 95,
+                      //height: vP * 8,
+                      minWidth: hP * 95,
                       child: RaisedButton(
                         color: Color(0xff2C2C34),
                         elevation: 0,

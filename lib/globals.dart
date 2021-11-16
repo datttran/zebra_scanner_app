@@ -46,7 +46,7 @@ String trackingNumber = "";
 
 String navFrom = "";
 String barCode = "";
-String scannedCode = 'Empty';
+String scannedCode = '';
 
 bool isPickUpOnTender = false;
 
@@ -114,7 +114,7 @@ int trackingLimit = 15;
 //New
 List? todayOrder = [];
 List<bool> customCardTapped = [];
-
+List<String> listTable = scannedCode.split('\n');
 DataTable scannedTable = DataTable(
   columns: [
     DataColumn(
@@ -141,6 +141,6 @@ DataTable scannedTable = DataTable(
     ))
   ],
   rows: [
-    DataRow(cells: [DataCell(Text('1')), DataCell(Text('')), DataCell(Text(''))])
+    //DataRow(cells: [DataCell(Text('1')), DataCell(Text('')), DataCell(Text(''))])
   ],
 );
